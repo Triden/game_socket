@@ -15,7 +15,7 @@ const client = function(){
         if(isReady){
 
         }
-    });
+    })
 
     place.addEventListener('mousemove', (e) => {
         // console.log(e);
