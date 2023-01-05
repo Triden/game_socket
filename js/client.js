@@ -1,30 +1,68 @@
 const client = function(){
-    // let place = document.querySelector('#place');
+    let place = document.querySelector('#place');
     let isReady = false;
     let ws;
+    let coorM = {x: 0, y: 0};
+    let keys = {a: 0, s: 0, d: 0, w: 0};
+    let shapes = {};
+    let shots = {};
 
     document.addEventListener('keydown', (ev) => {
-        console.log(ev);
-        if(isReady){
-
+        let key = ev.key;
+        if(key == 'ф'){
+            key = 'a';
+        }
+        if(key == 'ы'){
+            key = 's';
+        }
+        if(key == 'в'){
+            key = 'd';
+        }
+        if(key == 'ц'){
+            key = 'w';
+        }
+        if(isReady && keys[key] == 0){
+            keys[key] = 1;
+            ws.send(JSON.stringify({
+                type: 'keyDown',
+                data: {key: key}
+            }));
         }
     });
 
     document.addEventListener('keyup', (ev) => {
-        console.log(ev);
-        if(isReady){
-
+        let key = ev.key;
+        if(key == 'ф'){
+            key = 'a';
         }
-    })
+        if(key == 'ы'){
+            key = 's';
+        }
+        if(key == 'в'){
+            key = 'd';
+        }
+        if(key == 'ц'){
+            key = 'w';
+        }
 
-    place.addEventListener('mousemove', (e) => {
-        // console.log(e);
-        if(isReady){
+        if(isReady && keys[key] == 1){
+            keys[key] = 0;
             ws.send(JSON.stringify({
-                type: 'move',
-                data: {x: e.clientX, y: e.clientY}
+                type: 'keyUp',
+                data: {key: key}
             }));
         }
+    });
+
+    place.addEventListener('mousedown', (e) => {
+
+        ws.send(JSON.stringify({
+            type: 'push',
+            data: {
+                x: e.clientX,
+                y: e.clientY
+            }
+        }));
     });
 
     function getCookie(name) {
@@ -50,16 +88,61 @@ const client = function(){
             const req = JSON.parse(message.data);
             switch (req.type){
                 case 'init':
-                    //shape = req.data;
-                    if(req.data == 'ok'){
+                    if(req.data.status == 'ok'){
                         isReady = true;
                     }
                     break;
                 case 'move':
-                    place.innerText = '';
-                    for(const id in req.data){
-                        //console.log(val);
-                        place.insertAdjacentHTML('beforeend', `<div style="position: absolute; background-color: ${req.data[id].color}; height: ${req.data[id].r}px; width: ${req.data[id].r}px; border-radius: 100%; top: ${req.data[id].y - Math.round(req.data[id].r / 2)}px; left: ${req.data[id].x - Math.round(req.data[id].r / 2)}px;"></div>`);
+                    for(const id in shapes){
+                        if(!req.data.shapes[id]){
+                            delete shapes[id];
+                            const el = document.getElementById(id);
+                            if(el){
+                                el.remove();
+                            }
+                        }
+                    }
+
+                    for(const id in shots){
+                        if(!req.data.shots[id]){
+                            delete shots[id];
+                            const el = document.getElementById(id);
+                            if(el){
+                                el.remove();
+                            }
+                        }
+                    }
+
+                    for(const id in req.data.shots){
+                        // console.log(val);
+                        if(shots[id]){
+                            const el = document.getElementById(id);
+                            if(!el){
+                                delete shots[id];
+                                continue;
+                            }
+                            el.style.left = `${req.data.shots[id].x - Math.round(req.data.shots[id].r / 2)}px`;
+                            el.style.top  = `${req.data.shots[id].y - Math.round(req.data.shots[id].r / 2)}px`;
+                        } else {
+                            shots[id] = 1;
+                            place.insertAdjacentHTML('beforeend', `<div id="${id}" style="position: absolute; background-color: ${req.data.shots[id].color}; height: ${req.data.shots[id].r}px; width: ${req.data.shots[id].r}px; border-radius: 100%; top: ${req.data.shots[id].y - Math.round(req.data.shots[id].r / 2)}px; left: ${req.data.shots[id].x - Math.round(req.data.shots[id].r / 2)}px;"></div>`);
+                        }
+                    }
+
+                    for(const id in req.data.shapes){
+                        // console.log(val);
+                        if(shapes[id]){
+                            const el = document.getElementById(id);
+                            if(!el){
+                                delete shapes[id];
+                                continue;
+                            }
+                            el.style.left = `${req.data.shapes[id].x - Math.round(req.data.shapes[id].r / 2)}px`;
+                            el.style.top  = `${req.data.shapes[id].y - Math.round(req.data.shapes[id].r / 2)}px`;
+                        } else {
+                            shapes[id] = 1;
+                            place.insertAdjacentHTML('beforeend', `<div id="${id}" style="position: absolute; background-color: ${req.data.shapes[id].color}; height: ${req.data.shapes[id].r}px; width: ${req.data.shapes[id].r}px; border-radius: 100%; top: ${req.data.shapes[id].y - Math.round(req.data.shapes[id].r / 2)}px; left: ${req.data.shapes[id].x - Math.round(req.data.shapes[id].r / 2)}px;"></div>`);
+                        }
                     }
                     break;
             }
@@ -77,4 +160,5 @@ const client = function(){
         init: init
     }
 }();
+
 client.init();
