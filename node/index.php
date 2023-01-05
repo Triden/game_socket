@@ -12,14 +12,17 @@
             place = document.querySelector('#place');
 
             //const shape = {r: 0, color: '#000000', x: 0, y: 0};
-            const ws = new WebSocket("ws://dev2.randomup.ru:5555");
+            const ws = new WebSocket("wss://game.randomup.ru/ws/");
             let isLoad = false;
 
+            ws.onerror = function(error) {
+              console.log(error);
+            };
             ws.onopen = () => {
                 init();
             };
             place.addEventListener('mousemove', (e) => {
-                console.log(e);
+                // console.log(e);
                 if(isLoad){
                     ws.send(JSON.stringify({
                         type: 'move',
